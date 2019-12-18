@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head>
+    <title>Spring Security 登录页</title>
+
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" th:inline="javascript">
+        /*<![CDATA[*/
+        var ctxPath = /*[[@{/}]]*/ '';
+        /*]]>*/
+    </script>
+    　
+</head>
+<body>
+<div style="border: 1px solid black;">
+    <span id="username_password_login" style="color:blue">用户名密码</span>
+    <span id="sms_login">短信验证码</span>
+
+    <div id="username_password">
+        <p><span>用户名：</span> <input type="text" name="username"/></p>
+        <p><span>密码：</span><input type="password" name="password"/></p>
+        <p>
+            <button id="username_password_login_btn">登录</button>
+        </p>
+    </div>
+
+    <div id="sms" hidden>
+        <p><span>手机号：</span> <input type="text" name="mobile"/></p>
+        <p><span>验证码：</span><input type="text" name="code"/></p>
+        <p>
+            <button id="sms_login_btn">登录</button>
+        </p>
+    </div>
+
+</div>
+</body>
+<script>
+    $(function () {
+        var smsLogin = $("#sms_login");
+        var sms = $("#sms");
+        var smsLoginBtn = $("#sms_login_btn");
+        var usernamePasswordLogin = $("#username_password_login");
+        var usernamePassword = $("#username_password");
+        var usernamePasswordLoginBtn = $("#username_password_login_btn");
+
+        smsLogin.click(function () {
+            smsLogin.css({"color": "blue"});
+            sms.show();
+            usernamePasswordLogin.css({"color": "black"});
+            usernamePassword.hide();
+        });
+
+        usernamePasswordLogin.click(function () {
+            usernamePasswordLogin.css({"color": "blue"});
+            usernamePassword.show();
+            smsLogin.css({"color": "black"});
+            sms.hide();
+        });
+
+
+        usernamePasswordLoginBtn.bind('click', function () {
+            var url = ctxPath + "login/passport";
+            var username = $(" input[ name='username' ] ").val();
+            var password = $(" input[ name='password' ] ").val();
+            var data = {'username': username, 'password': password};
+            $.ajax({
+                    url: url,
+                    data: data,
+                    type: 'POST',
+                    success: function (data) {
+                        //登录成功--模拟刷新页面
+                        window.location.href = ctxPath + "hello";
+                    },
+                    error: function (data) {
+                        alert(data.responseText);
+                    }
+                }
+            );
+        });
+
+        smsLoginBtn.bind('click', function () {
+            var url = ctxPath + "login/sms";
+            var mobile = $(" input[ name='mobile' ] ").val();
+            var code = $(" input[ name='code' ] ").val();
+            var data = {'mobile': mobile, 'code': code};
+            $.ajax({
+                    url: url,
+                    data: data,
+                    type: 'POST',
+                    success: function (data) {
+                        //登录成功--模拟刷新页面
+                        window.location.href = ctxPath + "hello";
+                    },
+                    error: function (data) {
+                        alert(data.responseText);
+                    }
+                }
+            );
+        });
+    });
+
+</script>
+</html>
