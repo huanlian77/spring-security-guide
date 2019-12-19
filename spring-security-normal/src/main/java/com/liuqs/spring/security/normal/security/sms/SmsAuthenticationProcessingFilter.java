@@ -1,6 +1,5 @@
 package com.liuqs.spring.security.normal.security.sms;
 
-import com.liuqs.spring.security.normal.security.passport.PassportAuthenticationToken;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
