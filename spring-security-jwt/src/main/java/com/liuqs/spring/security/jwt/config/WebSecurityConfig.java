@@ -64,5 +64,4 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public JwtTokenUtil jwtTokenUtil(){
         return new JwtTokenUtil();
     }
-
 }
