@@ -145,12 +145,12 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 ```sql
 DROP TABLE IF EXISTS `oauth_client_details`;
 CREATE TABLE `oauth_client_details` (
-  `client_id` varchar(48) NOT NULL,
-  `resource_ids` varchar(256) DEFAULT NULL,
-  `client_secret` varchar(256) DEFAULT NULL,
-  `scope` varchar(256) DEFAULT NULL,
-  `authorized_grant_types` varchar(256) DEFAULT NULL,
-  `web_server_redirect_uri` varchar(256) DEFAULT NULL,
+  `client_id` varchar(48) NOT NULL,     				// Spring Security中用户唯一标识 
+  `resource_ids` varchar(256) DEFAULT NULL,				// 对应资源服务id，多个','分割
+  `client_secret` varchar(256) DEFAULT NULL,			// 密码
+  `scope` varchar(256) DEFAULT NULL,					// 授权范围
+  `authorized_grant_types` varchar(256) DEFAULT NULL,	// 授权类型，多个','分割
+  `web_server_redirect_uri` varchar(256) DEFAULT NULL,	// 权限
   `authorities` varchar(256) DEFAULT NULL,
   `access_token_validity` int(11) DEFAULT NULL,
   `refresh_token_validity` int(11) DEFAULT NULL,
@@ -180,10 +180,10 @@ public class JwtTokenStore implements TokenStore {
   ...
 }
 ```
-发现 JwtTokenStore#removeAccessTokenUsingRefreshToken(OAuth2RefreshToken) 是一个空方法，会造成使用 refreshToken 刷新 token 过，旧 token 依旧可用。如果要实现使用 refreshToken 刷新 token 过，旧 toke 不能使用，那么需要自定义 JwtTokenStore。
-<span style="margin-right:30px"></span><7-1> 使用数据库保存 token 和 refreshToken。 <br>
-<span style="margin-right:30px"></span><7-2> 但刷新 token 时，通过 refreshToken 删除数据库记录。 <br>
-<8> Jwt 转换，使用非对称加密。通过 `keytool -genkeypair -alias mytest -keyalg RSA -keypass mypass -keystore mytest.jks -storepass mypass` 生成 `mytest.jks` 文件，再通过 `keytool -list -rfc --keystore mytest.jks | openssl x509 -inform pem -pubkey` 获取公、私钥，并把公钥保存咋 `public.text` 文件。
+发现 JwtTokenStore#removeAccessTokenUsingRefreshToken(OAuth2RefreshToken) 是一个空方法，会造成使用 refreshToken 刷新 token 后，旧 token 依旧可用。如果要实现使用 refreshToken 刷新 token 过，旧 toke 不能使用，那么需要自定义 JwtTokenStore。
+	<7-1> 使用数据库保存 token 和 refreshToken。
+	<7-2> 但刷新 token 时，通过 refreshToken 删除数据库记录。
+<8> Jwt 转换，使用非对称加密。通过 `keytool -genkeypair -alias mytest -keyalg RSA -keypass mypass -keystore mytest.jks -storepass mypass` 生成 `mytest.jks` 文件，放到 **授权服务** 的 classpath 下面。再通过 `keytool -list -rfc --keystore mytest.jks | openssl x509 -inform pem -pubkey` 获取公、私钥，并把公钥保存在 `public.txt` 文件，放到 **资源服务**的 classpath  下面。
 
 ## 资源服务
 ### ResourceServerConfig
@@ -274,17 +274,26 @@ token is invalid!**<br>
 
 ## 运行
 
+向表 `oauth_client_details`中插入信息
+
+```sql
+insert into oauth_client_details(client_id,resource_ids,client_secret,scope,authorized_grant_types,web_server_redirect_uri,authorities) values("123","order","123","order","password,authorization_code,refresh_token","http://baidu.com","pmv:say:hi")
+```
+
+启动授权服务和资源服务。
+
 ### 授权码模式
-1. 浏览器访问 <http://localhost:8080/oauth/authorize?client_id=123&redirect_uri=http://baidu.com&response_type=code&scope=order>，数据库中客户端信息 client_id为123，redirect_uri为http://baidu.com，scope为order。这时会跳转到登录页面：
+1. 浏览器访问 <http://localhost:8080/oauth/authorize?client_id=123&redirect_uri=http://baidu.com&response_type=code&scope=order，数据库中客户端信息 client_id为123，redirect_uri为http://baidu.com，scope为order。这时会跳转到登录页面：
 
 ![授权码-登录](https://cdn.jsdelivr.net/gh/huanlian77/CDN/images/20200609114900.jpg)
+
+**登录账号：lisi，密码：123456**
 
 2. 输入用户名密码，然后点击 **Authorize** 进行授权：
 
 ![授权码-授权](https://cdn.jsdelivr.net/gh/huanlian77/CDN/images/20200609114855.jpg)
 
-
-4. 3. 授权后跳转到 <http://baidu.com>，得到授权码 code：
+3. 授权后跳转到 <http://baidu.com>，得到授权码 code：
 
 ![授权码-得到code](https://cdn.jsdelivr.net/gh/huanlian77/CDN/images/20200609114823.jpg)
 
